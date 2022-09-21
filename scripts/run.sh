@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 if [[ -z $ECOHMEM_HOME ]]; then
-    echo "Error: ECOHMEM_HOME is not set, maybe you forgot to source the config file?"
+    echo "|HE| Error: ECOHMEM_HOME is not set, maybe you forgot to source the config file?"
     exit 1
 fi
 
@@ -16,7 +16,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --obj-file=*)
-      arg_obj_file="${key#*=}"
+      arg_obj_file="${arg#*=}"
       shift
       ;;
     --app-args)
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --app-args=*)
-      arg_app_args="${key#*=}"
+      arg_app_args="${arg#*=}"
       shift
       ;;
     --app-runner)
@@ -34,7 +34,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --app-runner=*)
-      arg_app_runner="${key#*=}"
+      arg_app_runner="${arg#*=}"
       shift
       ;;
     --runner-flags)
@@ -43,7 +43,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --runner-flags=*)
-      arg_runner_flags="${key#*=}"
+      arg_runner_flags="${arg#*=}"
       shift
       ;;
     --mpirun-flags)
@@ -52,7 +52,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --mpirun-flags=*)
-      arg_mpirun_flags="${key#*=}"
+      arg_mpirun_flags="${arg#*=}"
       shift
       ;;
     --flexmalloc-config)
@@ -61,7 +61,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --flexmalloc-config=*)
-      arg_fm_config="${key#*=}"
+      arg_fm_config="${arg#*=}"
       shift
       ;;
     --flexmalloc)
@@ -69,13 +69,11 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     *)
-      ercho "Error: Unknown argument $arg"
+      err_msg "Error: Unknown argument $arg"
       exit 1
       ;;
   esac
 done
-
-#output_file=${arg_output_file:-$ECOHMEM_ADVISOR_OUTPUT_FILE}
 
 fm_mem_config=${arg_fm_config:-$ECOHMEM_FLEXMALLOC_MEM_CONFIG}
 obj_dist_file=${arg_obj_file:-$ECOHMEM_ADVISOR_OUTPUT_FILE}
@@ -83,17 +81,8 @@ obj_dist_file=${arg_obj_file:-$ECOHMEM_ADVISOR_OUTPUT_FILE}
 app_args_str=${arg_app_args:-$ECOHMEM_APP_ARGS}
 mpirun_flags_str=${arg_mpirun_flags:-$ECOHMEM_MPIRUN_FLAGS}
 app_runner=${arg_app_runner:-$ECOHMEM_APP_RUNNER}
-app_runner_flags_str=${arg_app_runner_flags:-$ECOHMEM_APP_RUNNER_FLAGS}
+app_runner_flags_str=${arg_runner_flags:-$ECOHMEM_APP_RUNNER_FLAGS}
 
-
-#output_dir=
-#app_out_file=$output_dir/run.out
-#app_err_file=$output_dir/run.err
-
-export FLEXMALLOC_HOME=$ECOHMEM_FLEXMALLOC_HOME
-export FLEXMALLOC_FALLBACK_ALLOCATOR=$ECOHMEM_FLEXMALLOC_FALLBACK_ALLOCATOR
-export FLEXMALLOC_MINSIZE_THRESHOLD=$ECOHMEM_FLEXMALLOC_MINSIZE_THRESHOLD
-export FLEXMALLOC_MINSIZE_THRESHOLD_ALLOCATOR=$ECOHMEM_FLEXMALLOC_MINSIZE_THRESHOLD_ALLOCATOR
 
 # parse quotes and backslashes in arg/flag lists
 app_runner_flags=()
@@ -112,14 +101,19 @@ if [[ $ECOHMEM_IS_MPI_APP -eq 1 ]]; then
     cmd+=("$ECOHMEM_MPIRUN" "${mpirun_flags[@]}")
 else
     if [[ ! -z $arg_mpirun_flags ]]; then
-        echo "Warn: ignoring --mpirun-flags because the app is not configured as an MPI app"
+        msg "Warn: ignoring --mpirun-flags because the app is not configured as an MPI app"
     fi
 fi
 
 if [[ $arg_load_fm -eq 1 ]]; then
+    export FLEXMALLOC_HOME=$ECOHMEM_FLEXMALLOC_HOME
+    export FLEXMALLOC_FALLBACK_ALLOCATOR=$ECOHMEM_FLEXMALLOC_FALLBACK_ALLOCATOR
+    export FLEXMALLOC_MINSIZE_THRESHOLD=$ECOHMEM_FLEXMALLOC_MINSIZE_THRESHOLD
+    export FLEXMALLOC_MINSIZE_THRESHOLD_ALLOCATOR=$ECOHMEM_FLEXMALLOC_MINSIZE_THRESHOLD_ALLOCATOR
+
     cmd+=("$ECOHMEM_LOAD_FLEXMALLOC_SCRIPT" "$fm_mem_config" "$obj_dist_file")
 fi
 
 cmd+=("$ECOHMEM_APP_BINARY" "${app_args[@]}")
 
-"${cmd[@]}"
+log_exec "${cmd[@]}"

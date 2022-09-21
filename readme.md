@@ -98,7 +98,15 @@ Once the script finishes the output directory (set by ECOHMEM\_TRACE\_OUTPUT\_DI
 
 ### 2. Memory object distribution
 
-The second step is done using the *generate\_distribution.sh* script, which is a wrapper around the hmem\_advisor program. This program uses the postprocessed profiling data to compute the cost heuristics for each object, and then distributes the objects across the available memory tiers. The hmem\_advisor accepts several arguments to configure its behavior (set by ECOHMEM\_ADVISOR\_EXTRA\_ARGS or the --extra-args flag accepted by the script):
+The second step is done using the *generate\_distribution.sh* script, which is a wrapper around the hmem\_advisor program (located inside the bin directory). This program uses the postprocessed profiling data to compute the cost heuristics for each object, and then distributes the objects across the available memory tiers. Available command line arguments for the *generate\_distribution.sh* script:
+- --trace-type
+- --output-file
+- --input-dir
+- --mem-config
+- --extra-args
+- --force
+
+The hmem\_advisor accepts several arguments to configure its behavior (set by ECOHMEM\_ADVISOR\_EXTRA\_ARGS or the --extra-args flag of *generate\_distribution.sh*):
 
 - --mem-config: path to configuration file describing the available memory tiers, required.
 - --loads: path of csv file with load accesses information, required.
@@ -115,14 +123,6 @@ The second step is done using the *generate\_distribution.sh* script, which is a
 - --allocs-info: path of json file with memory allocations lifetime information.
 - --num-ranks: number of MPI ranks used to run the application.
 - --disable-bw-aware: disable the BW-aware distribution refinement step.
-
-Available command line arguments for the *generate\_distribution.sh* script:
-- --trace-type
-- --output-file
-- --input-dir
-- --mem-config
-- --extra-args
-- --force
 
 
 ### 3. Run with automatic object distribution
@@ -147,7 +147,7 @@ Size <MB available per process> MBytes
 ```
 - memkind/pmem: Allocates data on persistent memory mounted as FSDAX.
 ```
-# Memory configuration for allocator memkind/pmem-fsdax
+# Memory configuration for allocator memkind/pmem
 @ </path/to/pmem 0> ... @ </path/to/pmem N>
 ```
 - memkind/hbwmalloc: HBW memory available in KNL processors

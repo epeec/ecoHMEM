@@ -1,19 +1,63 @@
 
+msg() {
+    echo "|EH| $@"
+}
+
+err_msg() {
+    >&2 echo "|EH| $@"
+}
+
 shlex_split() {
     if [[ $# -ne 2 ]]; then
-        ercho "Error: expected 2 parameters, the string to split and the output array's name"
+        err_msg "Error: shlex_split expects 2 parameters, the string to split and the output array's name"
         exit 1
     fi
 
     local str=$1
-    local -n arr=$2 #ref to caller's array
+    local -n arr_hebhfd73hfvghdh=$2 #ref to caller's array, got "warning: arr: circular name reference" if caller array is named arr, so we use a weird name
 
     OLDIFS=$IFS
-    IFS=$'\n'
-    arr=( $("${ECOHMEM_PYTHON-python3}" -c 'import shlex; import sys; print("\n".join(shlex.split(sys.argv[1])))' "$str") )
+    IFS=$'\x01'
+    arr_hebhfd73hfvghdh=( $("${ECOHMEM_PYTHON-python3}" -c 'import shlex; import sys; print("\x01".join(shlex.split(sys.argv[1])))' "$str") )
     IFS=$OLDIFS
 }
 
-ercho() {
-    >&2 echo "$@"
+log_exec() {
+    if [[ $ECOHMEM_PRINT_CMDS -eq 1 ]]; then
+        msg "Executing: ${@}"
+    fi
+    "$@"
+}
+
+log_exec_out() {
+    if [[ $# -lt 2 ]]; then
+        err_msg "Error: log_exec_out expects 2 or more parameters"
+        exit 1
+    fi
+    args=("$@")
+    #outidx=$(($#-1))
+    #outfile=${args[$outidx]}
+    outfile=${args[@]: -1:1}
+    cmdsize=$(($#-1))
+    cmd=( "${args[@]:0:cmdsize}" )
+    if [[ $ECOHMEM_PRINT_CMDS -eq 1 ]]; then
+        msg "Executing: ${cmd[@]} > $outfile"
+    fi
+    "${cmd[@]}" > "$outfile"
+}
+
+log_exec_out_err() {
+    if [[ $# -lt 3 ]]; then
+        err_msg "Error: log_exec_out_err expects 3 or more parameters"
+        exit 1
+    fi
+    args=("$@")
+    outfile=${args[@]: -2:1}
+    errfile=${args[@]: -1:1}
+    cmdsize=$(($#-2))
+    cmd=( "${args[@]:0:cmdsize}" )
+    if [[ $ECOHMEM_PRINT_CMDS -eq 1 ]]; then
+        msg "Executing: ${cmd[@]} > $outfile 2> $errfile"
+    fi
+    "${cmd[@]}" > "$outfile" 2> "$errfile"
 }
